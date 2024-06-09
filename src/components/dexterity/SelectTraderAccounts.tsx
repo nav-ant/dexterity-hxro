@@ -19,41 +19,51 @@ export const SelectTraderAccounts: FC = () => {
         fetchTraderAccounts();
     }, [publicKey, manifest]);
 
-const fetchTraderAccounts = useCallback(async () => {
-        if (!publicKey) {console.log('publicKey error');return};
-        if (!manifest) {console.log('manifest error');return};
-        if (!manifest.fields) {console.log('manifest.fields error');return};
-        if (!manifest.fields.wallet.publicKey) {console.log('manifest.fields.wallet.publicKey error');return};
-
-        try {
-
-				const owner = publicKey
-				const marketProductGroup = new PublicKey(mpgPubkey)
-				const trgs = await manifest.getTRGsOfOwner(owner, marketProductGroup)
-				setTrgsArr(trgs)
-
-        } catch (error: any) {
-            notify({ type: 'error', message: `Selecting Trader Account failed!`, description: error?.message });
-        }
-
-    }, [publicKey, manifest]);
-
-    const handleCreateTRG = useCallback(async () => {
-        try {
-
-            // TRG Creation
-
-            fetchTraderAccounts();
-        } catch (error: any) {
-            notify({ type: 'error', message: `Creating Trader Account failed!`, description: error?.message });
-        }
-    }, [fetchTraderAccounts, manifest]);
-
-    const handleSelection = useCallback(async (selectedValue: string) => {
-
-            // TRG Selection & Initiation
-
-    }, [manifest, setTrader]);
+	const fetchTraderAccounts = useCallback(async () => {
+	        if (!publicKey) {console.log('publicKey error');return};
+	        if (!manifest) {console.log('manifest error');return};
+	        if (!manifest.fields) {console.log('manifest.fields error');return};
+	        if (!manifest.fields.wallet.publicKey) {console.log('manifest.fields.wallet.publicKey error');return};
+	
+	        try {
+	
+					const owner = publicKey
+					const marketProductGroup = new PublicKey(mpgPubkey)
+					const trgs = await manifest.getTRGsOfOwner(owner, marketProductGroup)
+					setTrgsArr(trgs)
+	
+	        } catch (error: any) {
+	            notify({ type: 'error', message: `Selecting Trader Account failed!`, description: error?.message });
+	        }
+	
+	    }, [publicKey, manifest]);
+	
+	const handleCreateTRG = useCallback(async () => {
+	        try {
+	
+	            const marketProductGroup = new PublicKey(mpgPubkey)
+							await manifest.createTrg(marketProductGroup)
+	
+	            fetchTraderAccounts();
+	        } catch (error: any) {
+	            notify({ type: 'error', message: `Creating Trader Account failed!`, description: error?.message });
+	        }
+	    }, [fetchTraderAccounts, manifest]);
+	
+	const handleSelection = useCallback(async (selectedTrgPubkey: string) => {
+	        if (selectedTrgPubkey == "default") return;
+	
+	        const trgPubkey = new PublicKey(selectedTrgPubkey)
+	        const trader = new dexterity.Trader(manifest, trgPubkey)
+	
+					await trader.update()
+	
+					const marketProductGroup = new PublicKey(mpgPubkey)
+					await manifest.updateOrderbooks(marketProductGroup)
+	
+					setTrader(trader)
+	
+	    }, [manifest, setTrader]);
 
     return (
         <div className="flex flex-col items-center justify-center border border-white rounded-lg p-4 mt-4">
